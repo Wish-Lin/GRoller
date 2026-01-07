@@ -1,0 +1,57 @@
+"""
+menubar.py
+
+This module creates the menubar of the app. Only one function is
+located here: create_menubar()
+
+Author: Wei-Hsu Lin
+"""
+
+
+import tkinter as tk
+
+def create_menubar(app: tk.Tk):
+    """
+    Creates the entire menubar of the GUI
+
+    The current (v0.1.0) menubar is
+        File|Edit|Help
+
+    Args:
+        app (tk.Tk): The app instance
+
+    Returns:
+        None
+    """
+    menubar = tk.Menu(app)
+    # 1 -- File Menu
+    file_menu = tk.Menu(menubar, tearoff=0)
+    file_menu.add_command(
+        label="New File",
+        accelerator="Ctrl+N",
+        #command=app.newfile
+    )
+    file_menu.add_command(
+        label="Open...",
+        accelerator="Ctrl+O",
+        command=app._open_file
+    )
+    file_menu.add_separator()
+    file_menu.add_command(
+        label="Exit",
+        accelerator="Ctrl+Q",
+        command=app.destroy
+    )
+    # 2 -- Edit Menu
+    edit_menu = tk.Menu(menubar, tearoff=0)
+    # 3 -- Help Menu
+    help_menu = tk.Menu(menubar, tearoff=0)
+    
+    # Generate menubar then set it as app's menubar
+    menubar.add_cascade(label="File", menu=file_menu)
+    menubar.add_cascade(label="Edit", menu=edit_menu)
+    menubar.add_cascade(label="Help", menu=help_menu)
+    app.config(menu=menubar)
+
+    # Attach menubar to app for later access
+    app.menubar = menubar
