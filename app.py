@@ -21,7 +21,7 @@ from transpiler import xgc_to_gcode, grant_gui_access
 class MainApp(tk.Tk):
     # Some internal variables
     groller_ver = "0.1.0"
-    program_title = f"Simply Awesome G-code Extender (GRoller) {groller_ver}"
+    program_title = f"GRoller {groller_ver}"
 
     def __init__(self):
         super().__init__()
