@@ -7,11 +7,11 @@ most of the actual GUI code are located in the modules
 Author: Wei-Hsu Lin
 """
 
-
+import sys, re, traceback, commentjson
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import sys, json, re, traceback
 from pathlib import Path
+
 
 from ui.menubar import create_menubar
 from ui.layout import create_layout
@@ -218,8 +218,8 @@ class MainApp(tk.Tk):
         try:
             settings_file = Path(__file__).with_name("settings.json")
             with settings_file.open("r", encoding="utf-8") as f:
-                self.settings = json.load(f)
-                # print(self.settings)
+                self.settings = commentjson.load(f)
+                print(self.settings)
         except Exception as e:
             self.lift() 
             # Reliably ensures the messagebox is on top of the main window 

@@ -1,8 +1,23 @@
 {
-  "current_file": "lorem",
-  "recent_files": "ipsum",
-  "tab_spaces": 2,
-  "comp_param": {
-    "max_dec_prec": 3
+  "ui": {
+    "_comment": "Set window size, font size, background color, etc here",
+    "window_width": 1600,
+    "background_color": "#FFFFFF",
+    "tab_spaces": 2,
+    "fontsize": {
+      "editor": 10,
+      "console": 8,
+      "label": 10,
+      "button": 10
+    }
+  },
+  "file_io":{
+    "current_file": "lorem",
+    "recent_files": "ipsum"
+  },
+  "transpiler": {
+    "_comment": "User-defined parameters for the transpiler",
+    "positional_precision": 3,
+    "angular_precision": 2
   }
 }

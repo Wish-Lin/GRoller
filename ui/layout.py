@@ -11,7 +11,7 @@ import math, sys
 import tkinter as tk
 from tkinter import font
 from tkinter.scrolledtext import ScrolledText
-from tklinenums import TkLineNumbers
+from lib.tklinenums import TkLineNumbers
 
 def create_layout(app: tk.Tk) -> None:
     # _configure_root_grid(app, True)
@@ -19,7 +19,7 @@ def create_layout(app: tk.Tk) -> None:
     _create_console(app)
 
 def _place_grid(widget: tk.Widget, size: tuple, 
-                position: tuple, grid: tuple = (32,18)) -> None:
+    position: tuple, grid: tuple = (32,18)) -> None:
     """
     A simple wrapper around tk.place() to place on a virtual "grid"
 
