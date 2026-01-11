@@ -1,6 +1,9 @@
+# Commenting in JSON enabled by the commentjson package
+# https://pypi.org/project/commentjson/
+
 {
   "ui": {
-    "_comment": "Set window size, font size, background color, etc here",
+    # Set window size, font size, background color, etc
     "window_width": 1600,
     "background_color": "#FFFFFF",
     "tab_spaces": 2,
@@ -16,7 +19,7 @@
     "recent_files": "ipsum"
   },
   "transpiler": {
-    "_comment": "User-defined parameters for the transpiler",
+    # User-defined parameters for the transpiler
     "positional_precision": 3,
     "angular_precision": 2
   }

@@ -10,7 +10,7 @@ Author: Wei-Hsu Lin
 
 import tkinter as tk
 
-def create_menubar(app: tk.Tk):
+def create_menubar(app: MainApp):
     """
     Creates the entire menubar of the GUI
 
@@ -18,12 +18,12 @@ def create_menubar(app: tk.Tk):
         File|Edit|Help
 
     Args:
-        app (tk.Tk): The app instance
+        app (MainApp): The app instance
 
     Returns:
         None
     """
-    menubar = tk.Menu(app)
+    menubar = tk.Menu(app.root)
     # 1 -- File Menu
     file_menu = tk.Menu(menubar, tearoff=0)
     file_menu.add_command(
@@ -40,18 +40,18 @@ def create_menubar(app: tk.Tk):
     file_menu.add_command(
         label="Exit",
         accelerator="Ctrl+Q",
-        command=app.destroy
+        command=app.root.destroy
     )
     # 2 -- Edit Menu
     edit_menu = tk.Menu(menubar, tearoff=0)
     # 3 -- Help Menu
     help_menu = tk.Menu(menubar, tearoff=0)
     
-    # Generate menubar then set it as app's menubar
+    # Generate menubar then set it as app.root's menubar
     menubar.add_cascade(label="File", menu=file_menu)
     menubar.add_cascade(label="Edit", menu=edit_menu)
     menubar.add_cascade(label="Help", menu=help_menu)
-    app.config(menu=menubar)
+    app.root.config(menu=menubar)
 
     # Attach menubar to app for later access
     app.menubar = menubar

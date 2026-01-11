@@ -5,7 +5,7 @@
 - **Source**: https://pypi.org/project/commentjson/
 - **License**: MIT License  
 
-**Usage in this project:** Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+**Usage in this project:** Enables commenting in `settings.json`, which improves user experience.
 
 ### MIT License
 
@@ -21,15 +21,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## tklinenums
 
-> [!NOTE]
-> Useful information that users should know, even when skimming content.
+> This package’s display behavior was modified, and support for scrollbars was added. Because of these changes, it is hosted locally in `lib/`.
 
 - **Project**: tklinenums  
 - **Version**: 1.7.1  
 - **Source**: https://pypi.org/project/tklinenums/  
 - **License**: MIT License  
 
-**Usage in this project:** Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+**Usage in this project:** Enables the line number display of editors.
 
 ### MIT License
 

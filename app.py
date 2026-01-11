@@ -18,28 +18,34 @@ from ui.layout import create_layout
 from transpiler import xgc_to_gcode, grant_gui_access
 
 
-class MainApp(tk.Tk):
-    # Some internal variables
-    groller_ver = "0.1.0"
-    program_title = f"GRoller {groller_ver}"
+class MainApp:
+    def __init__(self, root: tk.Tk):
 
-    def __init__(self):
-        super().__init__()
+        # Set internal variables, including the most important root
+        self.root = root
+        self.groller_ver = "0.1.0"
+        self.program_title = f"GRoller {self.groller_ver}"
+
+        # Load settings. Only if the loading is success will the app start
+        self._load_settings()
+        # Validate settings. To be added in the future.
+        # self._validate_settings()
 
         # Create a blank window
-        self.title(self.program_title)
-        self.geometry("1600x900") # Fits most screens now in 2025
-        self.resizable(False, False)
+        self.root.title(self.program_title)
+        self.root.geometry("1600x900") # Fits most screens now in 2025
+        self.root.resizable(False, False)
         self._set_icon()
 
-        self._load_settings()
-        self._set_hotkey_bindings()
+        
+        self._set_root_hotkeys()
 
+        # UI generation, pass the tkinter window in for processing
         create_menubar(self)
         create_layout(self)
 
-        # Injects self into the global of py_execute.py. End goal is to allow
-        # user XGC script to interact with the app (e.g, console_print)
+        # Injects self into the global of py_execute.py. The goal is to allow
+        # XGC script to interact with the GUI (e.g, console_print).
         grant_gui_access(self)
 
     def _set_icon(self) -> None:
@@ -47,7 +53,7 @@ class MainApp(tk.Tk):
         Set the window icon for the application.
 
         The icon file is ./assets/icon.png. If the icon file
-        does not exist, no icon is set.
+        does not exist, no icon is set and that's fine.
 
         Returns:
             None
@@ -55,14 +61,11 @@ class MainApp(tk.Tk):
         icon_path = Path(__file__).parent / "assets" / "icon.png"
         if icon_path.exists():
             icon_image = tk.PhotoImage(file=str(icon_path))
-            self.iconphoto(True, icon_image)
+            self.root.iconphoto(True, icon_image)
 
-    def _set_hotkey_bindings(self) -> None:
+    def _set_root_hotkeys(self) -> None:
         """
-        Set the window icon for the application.
-
-        The icon file is ./assets/icon.png. If the icon file
-        does not exist, no icon is set.
+        Set hotkeys on the root level
 
         Returns:
             None
@@ -73,7 +76,7 @@ class MainApp(tk.Tk):
             ],
         }
         eventless_key_bindings = {
-            self.destroy: [
+            self.root.destroy: [
                 "<Control-q>", "<Control-Q>", "<Command-q>", "<Command-Q>"
             ],
             self._open_file: [
@@ -82,10 +85,10 @@ class MainApp(tk.Tk):
         }
         for func, hotkeys in event_key_bindings.items():
             for hotkey in hotkeys:
-                self.bind_all(hotkey, lambda event, f=func: f(event))
+                self.root.bind_all(hotkey, lambda event, f=func: f(event))
         for func, hotkeys in eventless_key_bindings.items():
             for hotkey in hotkeys:
-                self.bind_all(hotkey, lambda event, f=func: f())
+                self.root.bind_all(hotkey, lambda event, f=func: f())
     
     def _open_file(self) -> None:
         """
@@ -160,28 +163,11 @@ class MainApp(tk.Tk):
         self.result_output.delete("1.0", tk.END)
         xgc_script = self.xgc_editor.get("1.0", "end-1c")
 
-        # Read max_dec_prec from settings dict, might still fail if user messed
-        # settings.json in a legal way. In that case fall back to default 3
+        pos_prec = self.settings["transpiler"]["positional_precision"]
+        ang_prec = self.settings["transpiler"]["angular_precision"]
+
         try:
-            max_dec_prec = self.settings["comp_param"]["max_dec_prec"]
-            if not isinstance(max_dec_prec, int):
-                max_dec_prec = 3
-                self._console_printline(
-                    (
-                        "Warning: Max decimal precision is not an integer. "
-                        "Default value of 3 is used. [settings.json]"
-                    ),
-                    "warning", True)
-        except KeyError:
-            max_dec_prec = 3
-            self._console_printline(
-                (
-                    "Warning: Max decimal precision not found. Default value "
-                    "of 3 is used. [settings.json]"
-                ),
-                "warning", True)
-        try:
-            gcode_script = xgc_to_gcode(xgc_script, (max_dec_prec,2))
+            gcode_script = xgc_to_gcode(xgc_script, (pos_prec, ang_prec))
         except Exception as e: # Compilation failed
             # Get the traceback object and check if the exception occured
             # before or after the exec() stage.abs
@@ -221,12 +207,16 @@ class MainApp(tk.Tk):
                 self.settings = commentjson.load(f)
                 print(self.settings)
         except Exception as e:
-            self.lift() 
+            self.root.lift() 
+            self.root.withdraw()
             # Reliably ensures the messagebox is on top of the main window 
             tk.messagebox.showerror(
                 "Error loading settings.json",
                 f"{e.__class__.__name__}: {e}",
-                parent=self
+                parent=self.root
             )
-            self.destroy()
+            self.root.destroy()
             sys.exit(0)
+
+
+
