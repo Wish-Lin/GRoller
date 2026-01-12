@@ -1,7 +1,7 @@
 """
 menubar.py
 
-This module creates the menubar of the app. Only one function is
+This module creates the menubar of the app. Only one public function is
 located here: create_menubar()
 
 Author: Wei-Hsu Lin
@@ -9,6 +9,8 @@ Author: Wei-Hsu Lin
 
 
 import tkinter as tk
+from tkinter import ttk
+from .child_windows import *
 
 def create_menubar(app: MainApp):
     """
@@ -46,6 +48,10 @@ def create_menubar(app: MainApp):
     edit_menu = tk.Menu(menubar, tearoff=0)
     # 3 -- Help Menu
     help_menu = tk.Menu(menubar, tearoff=0)
+    help_menu.add_command(
+        label="About GRoller",
+        command=lambda: create_help_about(app)
+    )
     
     # Generate menubar then set it as app.root's menubar
     menubar.add_cascade(label="File", menu=file_menu)
@@ -55,3 +61,5 @@ def create_menubar(app: MainApp):
 
     # Attach menubar to app for later access
     app.menubar = menubar
+
+

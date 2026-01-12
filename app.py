@@ -28,8 +28,8 @@ class MainApp:
 
         # Load settings. Only if the loading is success will the app start
         self._load_settings()
-        # Validate settings. To be added in the future.
-        # self._validate_settings()
+        # Validate settings.
+        self._validate_settings()
 
         # Create a blank window
         self.root.title(self.program_title)
@@ -58,7 +58,7 @@ class MainApp:
         Returns:
             None
         """
-        icon_path = Path(__file__).parent / "assets" / "icon.png"
+        icon_path = Path(__file__).parent / "assets" / "brand" / "icon_600x600.png"
         if icon_path.exists():
             icon_image = tk.PhotoImage(file=str(icon_path))
             self.root.iconphoto(True, icon_image)
@@ -217,6 +217,11 @@ class MainApp:
             )
             self.root.destroy()
             sys.exit(0)
+    
+    def _validate_settings(self):
+        self.settings["ui"]["window_height"] = int(
+            self.settings["ui"]["window_width"]*9/16
+        )
 
 
 
