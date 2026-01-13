@@ -8,9 +8,11 @@
     "background_color": "#FFFFFF",
     "tab_spaces": 2,
     "fontsize": {
+      "menu": 10,
       "editor": 10,
-      "console": 8,
+      "console": 7,
       "label": 10,
+      "paragraph": 7,
       "button": 10
     }
   },

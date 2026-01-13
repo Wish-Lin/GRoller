@@ -52,6 +52,10 @@ def create_menubar(app: MainApp):
         label="About GRoller",
         command=lambda: create_help_about(app)
     )
+    help_menu.add_command(
+        label="License",
+        command=lambda: create_help_license(app)
+    )
     
     # Generate menubar then set it as app.root's menubar
     menubar.add_cascade(label="File", menu=file_menu)

@@ -9,7 +9,7 @@ Author: Wei-Hsu Lin
 
 import sys, re, traceback, commentjson
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, font
 from pathlib import Path
 
 
@@ -26,10 +26,11 @@ class MainApp:
         self.groller_ver = "0.1.0"
         self.program_title = f"GRoller {self.groller_ver}"
 
-        # Load settings. Only if the loading is success will the app start
+        # Read settings from file
+        # Only if the reading is success will the app start
+        self._read_settings()
+        # Load and validate seetings (misc.)
         self._load_settings()
-        # Validate settings.
-        self._validate_settings()
 
         # Create a blank window
         self.root.title(self.program_title)
@@ -198,8 +199,8 @@ class MainApp:
             self.result_output_linenums.redraw()
         return "break"
 
-    def _load_settings(self):
-        # Load settings from settings.json in the same directory
+    def _read_settings(self):
+        # Read settings from settings.json in the same directory
         # Show messagebox then abort if settings fail to load
         try:
             settings_file = Path(__file__).with_name("settings.json")
@@ -218,10 +219,34 @@ class MainApp:
             self.root.destroy()
             sys.exit(0)
     
-    def _validate_settings(self):
+    def _load_settings(self):
+        # Process and act on the settings that was just read in
+
+        # Set window height (window ratio is fixed by me, therefore)
+        # not editable by user
         self.settings["ui"]["window_height"] = int(
-            self.settings["ui"]["window_width"]*9/16
+            self.settings["ui"]["window_width"]*9/16 # I love 16:9
         )
 
-
-
+        # Set up the internal font system according to user preference
+        # These are then used by UI all over the app
+        self._label_font = font.nametofont("TkDefaultFont").copy()
+        self._label_font.configure(
+            size=self.settings["ui"]["fontsize"]["label"]
+        )
+        self._editor_font = font.nametofont("TkFixedFont").copy()
+        self._editor_font.configure(
+            size=self.settings["ui"]["fontsize"]["editor"]
+        )
+        self._console_font = font.nametofont("TkFixedFont").copy()
+        self._console_font.configure(
+            size=self.settings["ui"]["fontsize"]["console"]
+        )
+        self._paragraph_font = font.nametofont("TkDefaultFont").copy()
+        self._paragraph_font.configure(
+            size=self.settings["ui"]["fontsize"]["paragraph"]
+        )
+        self._button_font = font.nametofont("TkDefaultFont").copy()
+        self._button_font.configure(
+            size=self.settings["ui"]["fontsize"]["button"]
+        )

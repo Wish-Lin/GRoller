@@ -110,10 +110,15 @@ def _create_text_editors(app: MainApp) -> None:
     # Create Labels
     app.xgc_editor_label = tk.Label(
         app.root, 
-        text="Extended G-code (XGC) Script"
+        text="Extended G-code (XGC) Script",
+        font=app._label_font
     )
     _place_grid(app.xgc_editor_label, (12, 1), (10, 1, "nw"))
-    app.result_output_label = tk.Label(app.root, text="Compiled G-code")
+    app.result_output_label = tk.Label(
+        app.root,
+        text="Compiled G-code",
+        font=app._label_font
+    )
     _place_grid(app.result_output_label, (8, 1), (23, 1, "nw"))
 
     # Create frames that host the line number widget, textarea and scroll bar
@@ -143,13 +148,13 @@ def _create_text_editors(app: MainApp) -> None:
     app.xgc_editor = tk.Text(
         app.xgc_editor_frame,
         # yscrollcommand=app.xgc_editor_scrollbar.set,
-        width=1, height=1, undo=True
+        width=1, height=1, undo=True, font=app._editor_font
     )
     app.result_output = tk.Text(
-        app.result_output_frame,
+        app.result_output_frame, state = tk.DISABLED,
         # yscrollcommand=app.result_output_scrollbar.set,
-        width=1, height=1, state = tk.DISABLED, # One shouldn't edit the output
-    )
+        width=1, height=1, font=app._editor_font 
+    ) # One shouldn't edit the output
 
     # Add hotkeys to xgc_editor: Ctrl+Enter = Compile and Tab = User-defined
     # space count
@@ -229,23 +234,15 @@ def _create_console(app: MainApp) -> None:
 
     Notes
     -----
-    The font size of console is always 70% or slightly smaller than the main 
-    xgc editor window to fit the error messages in less lines. The app.console
-    _hline is a horizontal line as wide as the console, useful when printing
-    messages to console later on.
     """
-    # Create a font object that is 70% or slightly smaller than xgc editor, 
-    # which is at default size
-    editor_font = font.nametofont(app.xgc_editor.cget("font"))
-    console_font = editor_font.copy()
-    console_font.configure(size=math.floor(editor_font.cget("size") * 0.7))
-
     # Create console label and console
-    app.console_label = tk.Label(app.root, text="Compilation Console")
+    app.console_label = tk.Label(
+        app.root, text="Compilation Console", font=app._label_font
+    )
     _place_grid(app.console_label, (8, 1), (1, 7, "nw"))
 
     app.console = ScrolledText(
-        app.root, state=tk.DISABLED, wrap=tk.WORD, font=console_font
+        app.root, state=tk.DISABLED, wrap=tk.WORD, font=app._console_font
     )
     _place_grid(app.console, (8, 8), (1, 8, "nw"))
 
@@ -262,8 +259,8 @@ def _create_console(app: MainApp) -> None:
     # Measure the console width in characters, then make the adequate console
     # header that will be inserted after every _reset_console()
     app.root.update_idletasks() # Make sure the size of console is rendered
-    console_char_width = ( # Rounded down and play safe by minus 1
-        app.console.winfo_width() // console_font.measure("0") - 1
+    console_char_width = ( # Rounded down and play safe by minus 2
+        app.console.winfo_width() // app._console_font.measure("0") - 2
     )
     ch_first_line = (
         f"GRoller {app.groller_ver} | Python {sys.version.split()[0]}"
@@ -275,11 +272,15 @@ def _create_console(app: MainApp) -> None:
 
     # Create the two buttons
     app.console_clear_btn = tk.Button(
-        app.root, text="Clear", command=app._reset_console)
+        app.root, text="Clear", 
+        command=app._reset_console, font=app._button_font
+    )
     _place_grid(app.console_clear_btn, (2, 1), (1, 16, "nw"))
 
     app.console_compile_btn = tk.Button(
-        app.root, text="Compile", command=app._compile)
+        app.root, text="Compile",
+        command=app._compile, font=app._button_font
+    )
     _place_grid(app.console_compile_btn, (4, 1), (5, 16, "nw"))
 
     # Run _reset_console() once during initialization
