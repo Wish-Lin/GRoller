@@ -206,7 +206,6 @@ class MainApp:
             settings_file = Path(__file__).with_name("settings.json")
             with settings_file.open("r", encoding="utf-8") as f:
                 self.settings = commentjson.load(f)
-                print(self.settings)
         except Exception as e:
             self.root.lift() 
             self.root.withdraw()

@@ -7,7 +7,7 @@ located here: create_menubar()
 Author: Wei-Hsu Lin
 """
 
-
+import platform
 import tkinter as tk
 from tkinter import ttk
 from .child_windows import *
@@ -25,23 +25,27 @@ def create_menubar(app: MainApp):
     Returns:
         None
     """
+    # Set correct modifier depending on OS. macOS uses ⌘ and everyone else
+    # (i.e, Windows and Linux) uses Ctrl
+    modifier = "⌘" if platform.system() == "Darwin" else "Ctrl"
+
     menubar = tk.Menu(app.root)
     # 1 -- File Menu
     file_menu = tk.Menu(menubar, tearoff=0)
     file_menu.add_command(
         label="New File",
-        accelerator="Ctrl+N",
+        accelerator=f"{modifier}+N",
         #command=app.newfile
     )
     file_menu.add_command(
         label="Open...",
-        accelerator="Ctrl+O",
+        accelerator=f"{modifier}+O",
         command=app._open_file
     )
     file_menu.add_separator()
     file_menu.add_command(
         label="Exit",
-        accelerator="Ctrl+Q",
+        accelerator=f"{modifier}+Q",
         command=app.root.destroy
     )
     # 2 -- Edit Menu

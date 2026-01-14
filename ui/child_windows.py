@@ -4,6 +4,7 @@ child_windows.py
 This module creates functions that create popup windows. So far this includes
 
 - Menubar -> Help -> About GRoller
+- Menubar -> Help -> License
 
 Author: Wei-Hsu Lin
 """
@@ -49,7 +50,7 @@ def create_help_license(app):
     except Exception as e:
         license_content = (
             "Unable to read local license file. Groller is licensed under "
-            "GNU General Public License (GPL) v3.0\n"
+            "GNU General Public License (GPL) v3.0\n\n"
             "https://www.gnu.org/licenses/gpl-3.0.en.html"
         )
 

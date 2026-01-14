@@ -83,7 +83,7 @@ def console_print(input: int | float | str) -> None:
     print() but to the GUI console
 
     Basically a print() that's redirectly to the GUI console.  Trivial data 
-    types only. All outputs of this function will be colored light blue.
+    types only. Outputs of this function are light blue colored.
 
     Parameters
     ----------
