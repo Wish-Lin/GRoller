@@ -42,6 +42,21 @@ def create_menubar(app: MainApp):
         accelerator=f"{modifier}+O",
         command=app._open_file
     )
+    file_menu.add_command(
+        label="Open Recent...",
+        #command=app._open_file
+    )
+    file_menu.add_separator()
+    file_menu.add_command(
+        label="Save...",
+        accelerator=f"{modifier}+S",
+        #command=app._open_file
+    )
+    file_menu.add_command(
+        label="Save As...",
+        accelerator=f"{modifier}+Shift+S",
+        #command=app._open_file
+    )
     file_menu.add_separator()
     file_menu.add_command(
         label="Exit",

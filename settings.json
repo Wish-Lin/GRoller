@@ -1,9 +1,7 @@
-# Commenting in JSON enabled by the commentjson package
-# https://pypi.org/project/commentjson/
-
 {
+  "_comment": "This file is designed to be accessed via the settings panel, not directly by the user",
   "ui": {
-    # Set window size, font size, background color, etc
+    "_comment": "User-defined window size, font size, background color, etc",
     "window_width": 1600,
     "background_color": "#FFFFFF",
     "tab_spaces": 2,
@@ -17,11 +15,11 @@
     }
   },
   "file_io":{
-    "current_file": "lorem",
-    "recent_files": "ipsum"
+    "_comment": "File IO parameters, not open for user editing",
+    "current_file": ""
   },
   "transpiler": {
-    # User-defined parameters for the transpiler
+    "_comment": "User-defined parameters for the transpiler",
     "positional_precision": 3,
     "angular_precision": 2
   }
