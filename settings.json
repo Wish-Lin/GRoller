@@ -3,6 +3,7 @@
   "ui": {
     "_comment": "User-defined window size, font size, background color, etc",
     "window_width": 1600,
+    "window_height": 900,
     "background_color": "#FFFFFF",
     "tab_spaces": 2,
     "fontsize": {
@@ -14,9 +15,9 @@
       "button": 10
     }
   },
-  "file_io":{
-    "_comment": "File IO parameters, not open for user editing",
-    "current_file": ""
+  "file_io": {
+    "_comment": "File IO parameters, not open for user access",
+    "current_file": "/home/wish-lin/Documents/VolksCurta/GRoller/test/second.xgc"
   },
   "transpiler": {
     "_comment": "User-defined parameters for the transpiler",

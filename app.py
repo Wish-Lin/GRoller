@@ -21,10 +21,11 @@ from transpiler import xgc_to_gcode, grant_gui_access
 class MainApp:
     def __init__(self, root: tk.Tk):
 
-        # Set internal variables, including the most important root
+        # Set internal variables, including the most important one: root
         self.root = root
         self.groller_ver = "0.1.0"
         self.program_title = f"GRoller {self.groller_ver}"
+        self.settings_json_path = Path(__file__).with_name("settings.json")
 
         # Read settings from file
         # Only if the reading is success will the app start
@@ -59,7 +60,7 @@ class MainApp:
         Returns:
             None
         """
-        icon_path = Path(__file__).parent / "assets" / "brand" / "icon_600x600.png"
+        icon_path = Path(__file__).parent/"assets"/"brand"/"icon_600x600.png"
         if icon_path.exists():
             icon_image = tk.PhotoImage(file=str(icon_path))
             self.root.iconphoto(True, icon_image)
@@ -80,8 +81,14 @@ class MainApp:
             self.root.destroy: [
                 "<Control-q>", "<Control-Q>", "<Command-q>", "<Command-Q>"
             ],
+            self._new_file: [
+                "<Control-n>", "<Control-N>", "<Command-n>", "<Command-N>"
+            ],
             self._open_file: [
                 "<Control-o>", "<Control-O>", "<Command-o>", "<Command-O>"
+            ],
+            self._save_file: [
+                "<Control-s>", "<Control-S>", "<Command-s>", "<Command-S>"
             ],
         }
         for func, hotkeys in event_key_bindings.items():
@@ -112,11 +119,73 @@ class MainApp:
             return  # Action cancelled by user
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        # Clear the entire xgc editor then insert the file content
+        # Clear both editors and insert the file content to xgc editor 
         self.xgc_editor.delete("1.0", tk.END)
         self.xgc_editor.insert(tk.END, content)
-        self.xgc_editor_linenums.redraw() # Update linenum display
+        self.xgc_editor_linenums.redraw()
+        
+        self.result_output.config(state=tk.NORMAL)
+        self.result_output.delete("1.0", tk.END)
+        self.result_output_linenums.redraw()
+        self.result_output.config(state=tk.DISABLED)
+
+    def _new_file(self) -> None:
+        """
+        Create a new extended G-code file (.xgc)
+
+        This function can be called from the file menu, by Ctrl+N in 
+        Windows/Linux, or by Command+N in macOS. 
+
+        Returns:
+            None
+        """
+        file_path = tk.filedialog.asksaveasfilename(
+            title="New File",
+            filetypes=[
+                ("GRoller Extended G-code Files", "*.xgc"),
+            ]
+        )
+        if not file_path:
+            return  # Action cancelled by user
+
+        # Create empty file and write nothing to it
+        with open(file_path, "w", encoding="utf-8") as f:
+            pass 
+
+        # Set current_file setting to user input, then clear both editors
+        self.settings["file_io"]["current_file"] = file_path
+        self._save_settings_to_json()
+        self.xgc_editor.delete("1.0", tk.END)
+        self.xgc_editor_linenums.redraw()
+
+        self.result_output.config(state=tk.NORMAL)
+        self.result_output.delete("1.0", tk.END)
+        self.result_output_linenums.redraw()
+        self.result_output.config(state=tk.DISABLED)
     
+    def _save_file(self) -> None:
+        """
+        Save the contents of the editor to files
+
+        This function can be called from the file menu, by Ctrl+S in 
+        Windows/Linux, or by Command+S in macOS. 
+
+        Returns:
+            None
+        """
+        # G-code file is stored in the same location as the xgc file, and
+        # with the same name. Create if nonexistent and overwrite otherwise
+        xgc_path = Path(self.settings["file_io"]["current_file"])
+        gcode_path = xgc_path.with_name(f"{xgc_path.stem}.gcode")
+        
+        # Get scripts
+        xgc_script = self.xgc_editor.get("1.0", "end-1c")
+        gcode_script = self.result_output.get("1.0", "end-1c")
+
+        # Write scripts to file
+        xgc_path.write_text(xgc_script)
+        gcode_path.write_text(gcode_script)
+
     def _select_all(self, event: tk.Event):
         """
         Select all text in the widget (tk.Entry and tk.Text only)
@@ -203,8 +272,7 @@ class MainApp:
         # Read settings from settings.json in the same directory
         # Show messagebox then abort if settings fail to load
         try:
-            settings_file = Path(__file__).with_name("settings.json")
-            with settings_file.open("r", encoding="utf-8") as f:
+            with self.settings_json_path.open("r", encoding="utf-8") as f:
                 self.settings = json.load(f)
         except Exception as e:
             self.root.lift() 
@@ -217,16 +285,16 @@ class MainApp:
             )
             self.root.destroy()
             sys.exit(0)
+
+    def _save_settings_to_json(self):
+        # Write the current state of settings object to settings.json
+        with self.settings_json_path.open("w", encoding="utf-8") as f:
+            json.dump(self.settings, f, indent=2)
     
     def _load_settings(self):
         # Process and act on the settings that was just read in
 
-        # Set window height (window ratio is fixed by me, therefore)
-        # not editable by user
-        self.settings["ui"]["window_height"] = int(
-            self.settings["ui"]["window_width"]*9/16 # I love 16:9
-        )
-
+        # 1.
         # Set up the internal font system according to user preference
         # These are then used by UI all over the app
         self._label_font = font.nametofont("TkDefaultFont").copy()

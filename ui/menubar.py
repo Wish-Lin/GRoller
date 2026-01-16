@@ -35,7 +35,7 @@ def create_menubar(app: MainApp):
     file_menu.add_command(
         label="New File",
         accelerator=f"{modifier}+N",
-        #command=app.newfile
+        command=app._new_file
     )
     file_menu.add_command(
         label="Open...",
@@ -50,7 +50,7 @@ def create_menubar(app: MainApp):
     file_menu.add_command(
         label="Save...",
         accelerator=f"{modifier}+S",
-        #command=app._open_file
+        command=app._save_file
     )
     file_menu.add_command(
         label="Save As...",
