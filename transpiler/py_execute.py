@@ -18,9 +18,15 @@ global is determined at definition, not at execution.
 
 # A dict that records the current state of the machine.
 machine_state = {
-    "is_polar_mode": False,    # Turned on by G16 and off by G15
-    "polar_cx": 0.0,           # Set by G16
-    "polar_cy": 0.0,           # Set by G16
+    "polar_mode": {
+        "enabled": False,      # Turned on by G16 and off by G15
+        "cx": 0.0,             # Set by G16
+        "cy": 0.0              # Set by G16
+    },
+    "canned_cycle": {
+        "enabled": False,
+        "mode": "G81"
+    },
     "unit": "mm",              # Set by G20/G21, No real use for now.
     "positioning": "absolute", # Set by G90/G91. No real use for now.
     "spindle_state": "off",    # Set by M03/M05. No real use for now.
@@ -99,6 +105,10 @@ def console_print(input: int | float | str) -> None:
         raise TypeError("console_print: Input is not a number or string")
     app._console_printline(input, "print", False)
 
+def canned_cycle(**kwargs: dict) -> None:
+    global exec_result
+    exec_result += f"hahaha{kwargs}\n"
+
 def G00(**kwargs: dict) -> None:
     """
     Rapid Linear motion
@@ -129,7 +139,7 @@ def G00(**kwargs: dict) -> None:
         raise ValueError(f"G00 contains unexpected parameters: {illegal}")
 
     # Calculate the X(radius) and Y(angle) into actual X and Y
-    if machine_state["is_polar_mode"]:
+    if machine_state["polar_mode"]["enabled"]:
         """
         If both X(radius) and Y(angle) is provided, attempt to convert to 
         Cartesian. If only one is provided raise an exception. If neither is 
@@ -139,8 +149,10 @@ def G00(**kwargs: dict) -> None:
         if {"X", "Y"} <= set(kwargs):
             # Polar -> Cartesian.
             r, theta = kwargs["X"], kwargs["Y"]
-            x = machine_state["polar_cx"] + r * math.cos(math.radians(theta))
-            y = machine_state["polar_cy"] + r * math.sin(math.radians(theta))
+            cx = machine_state["polar_mode"]["cx"]
+            cy = machine_state["polar_mode"]["cy"]
+            x = cx + r * math.cos(math.radians(theta))
+            y = cy + r * math.sin(math.radians(theta))
             kwargs["X"], kwargs["Y"] = x, y
         elif ("X" in kwargs) and ("Y" not in kwargs):
             raise ValueError("G00 (polar mode) needs argument Y")
@@ -180,7 +192,7 @@ def G01(**kwargs: dict) -> None:
         raise ValueError(f"G01 contains unexpected parameters: {illegal}")
 
     # Calculate the X(radius) and Y(angle) into actual X and Y
-    if machine_state["is_polar_mode"]:
+    if machine_state["polar_mode"]["enabled"]:
         """
         If both X(radius) and Y(angle) is provided, attempt to convert to 
         Cartesian. If only one is provided raise an exception. If neither is 
@@ -190,8 +202,10 @@ def G01(**kwargs: dict) -> None:
         if {"X", "Y"} <= set(kwargs):
             # Polar -> Cartesian
             r, theta = kwargs["X"], kwargs["Y"]
-            x = machine_state["polar_cx"] + r * math.cos(math.radians(theta))
-            y = machine_state["polar_cy"] + r * math.sin(math.radians(theta))
+            cx = machine_state["polar_mode"]["cx"]
+            cy = machine_state["polar_mode"]["cy"]
+            x = cx + r * math.cos(math.radians(theta))
+            y = cy + r * math.sin(math.radians(theta))
             kwargs["X"], kwargs["Y"] = x, y
         elif ("X" in kwargs) and ("Y" not in kwargs):
             raise ValueError("G01 (polar mode) needs an extra argument: Y")
@@ -332,7 +346,7 @@ def G15(is_line_end: bool) -> None:
     """
     global machine_state
 
-    machine_state["is_polar_mode"] = False
+    machine_state["polar_mode"]["enabled"] = False
 
 def G16(X: int | float, Y: int | float) -> None:
     """
@@ -365,9 +379,9 @@ def G16(X: int | float, Y: int | float) -> None:
     """
     global machine_state
 
-    machine_state["is_polar_mode"] = True
-    machine_state["polar_cx"] = X
-    machine_state["polar_cy"] = Y
+    machine_state["polar_mode"]["enabled"] = True
+    machine_state["polar_mode"]["cx"] = X
+    machine_state["polar_mode"]["cy"] = Y
 
 def G17(is_line_end: bool) -> None:
     """
@@ -704,6 +718,7 @@ exec_ns = {
     "round": round,
     "frange": frange,
     "console_print": console_print,
+    "canned_cycle": canned_cycle,
 
     # The G-code functions, core of this Python hack
     "G00": G00,

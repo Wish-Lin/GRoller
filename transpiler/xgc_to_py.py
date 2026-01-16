@@ -77,48 +77,78 @@ def xgc_to_python(xgc_script: str) -> str:
     # Work over the script line by line. Deal with each line on a case by case
     # basis as shown below
     line_no = 0 # Keep track of line number for error report
+    # Set of supported G-code commands that take no input
+    paramaterless_commands: set = {
+        "G15", "G17", "G18", "G19", "G20", "G21", "G90", 
+        "G91", "G93", "G94","M05", "M30"
+    }
     try:
         for line in xgc_script.splitlines(): 
             line_no += 1
             stripped_line = line.strip()
+            # Split line into tokens, used throughout this function. Example:
+            # "G01 X10 Y[5+i] Z3 " -> ["G01", "X10", "Y[5+i]", "Z3"]. 
+            tokens = stripped_line.split()
+            keys = [token[0] for token in tokens]
             
-            """
-            "Real" python code and variable declaration: don't touch at all. 
-            Note that indentation of nested for loop is preserved. Right now 
-            I detect by assuming that Python code starts with a lowercase 
-            character, but I don't like it. 
-            """
+            # "Real" python code and variable declaration: don't touch at all. 
+            # Note that indentation of nested for loop is preserved. Right now 
+            # I detect by assuming that Python code starts with a lowercase 
+            # character, but I don't like it. 
             if (stripped_line[0].islower() or
                 _is_variable_declaration(stripped_line)):
                 python_code += f"{line}\n"
                 continue
-                
-            """
-            At this point the line is an actual G-code line unless user 
-            straight up inputs nonsense. Now split line into tokens: 
-            
-            "G01 X10 Y[5+i] Z3 " -> ["G01", "X10", "Y[5+i]", "Z3"]. 
-            If the line consists of only  parameterless G/M command (e.g., 
-            safety starting line or mode change), then it is dealt here. The 
-            effects of True and False are shown in py_execute.py.
-            """
 
-            # Set of supported G-code commands that take no input
-            paramaterless_commands: set = {
-                "G15", "G17", "G18", "G19", "G20", "G21", "G90", 
-                "G91", "G93", "G94","M05", "M30"
-            }
-            tokens = stripped_line.split()
-            if set(tokens) <= paramaterless_commands: # subset detection
+            # If the line consists of only X and/or Y, then it is a line in a 
+            # canned cycle and is dealt with here. 
+            
+            # Case 1: Both X and Y are present. Regex matches:
+            # X[num][some space]Y[num]
+            elif set(keys) == {"X", "Y"}:
+                line = re.sub(
+                    r"X(-?\d+(?:\.\d+)?)\s+Y(-?\d+(?:\.\d+)?)",
+                    r"canned_cycle(X=\1, Y=\2)",
+                    line
+                )
+                python_code += f"{line}\n"
+                continue
+
+            # Case 2: Only X is present. Regex matches: X[num]
+            elif set(keys) == {"X"}:
+                line = re.sub(
+                    r"X(-?\d+(?:\.\d+)?)",
+                    r"canned_cycle(X=\1)",
+                    line
+                )
+                python_code += f"{line}\n"
+                continue
+
+            # Case 3: Only Y is present. Regex matches: Y[num]
+            elif set(keys) == {"Y"}:
+                line = re.sub(
+                    r"Y(-?\d+(?:\.\d+)?)",
+                    r"canned_cycle(Y=\1)",
+                    line
+                )
+                python_code += f"{line}\n"
+                continue
+                
+            # At this point the line is a normal G-code line (i.e., starts with
+            # a command) unless user straight up inputs nonsense. If the line 
+            # consists of only parameterless G/M command (e.g., safety starting
+            # line or mode change), then it is dealt here. The effects of True
+            # and False are shown in py_execute.py.
+
+            elif set(tokens) <= paramaterless_commands: # subset detection
                 # Actually legit, proceed
                 python_code += f"{"(False)\n".join(tokens)}(True)\n"
                 continue
             
-            """
-            Finally, the most common scenario: The line is a G-code line with
-            parameters (ex: G01 X10 Y5 Z1). A dedicated function has been made 
-            for this case.
-            """
+            # Finally, the most common scenario: The line is a G-code line with
+            # parameters (ex: G01 X10 Y5 Z1). A dedicated function has been 
+            # made for this case.
+            
             python_code += f"{_xgc_line_to_func(line)}\n"
         return python_code
 
