@@ -242,12 +242,13 @@ class MainApp:
             # Get the traceback object and check if the exception occured
             # before or after the exec() stage.abs
             traceback_str = traceback.format_exc()
+            # print(traceback_str)
             match = re.search( # This line only shows up in exec() layer
-                r"File \"<string>\", line (\d+), in <module>",
+                r"File \"<string>\", line (\d+)",
                 traceback_str
             )
             if match: # Error occured in exec()
-                line_number = int(match.group(1))
+                line_number = int(match.group(1)) # Capture error location
                 self._console_printline(
                     f"Python exec() Error: Line {line_number}:", 
                     "error", False)

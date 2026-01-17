@@ -104,30 +104,30 @@ def xgc_to_python(xgc_script: str) -> str:
             # canned cycle and is dealt with here. 
             
             # Case 1: Both X and Y are present. Regex matches:
-            # X[num][some space]Y[num]
+            # X[num or expression][some space]Y[num or expression]
             elif set(keys) == {"X", "Y"}:
                 line = re.sub(
-                    r"X(-?\d+(?:\.\d+)?)\s+Y(-?\d+(?:\.\d+)?)",
+                    r"X([^\s]+)\s+Y([^\s]+)",
                     r"canned_cycle(X=\1, Y=\2)",
                     line
                 )
                 python_code += f"{line}\n"
                 continue
 
-            # Case 2: Only X is present. Regex matches: X[num]
+            # Case 2: Only X is present. Regex matches: X[num or expression]
             elif set(keys) == {"X"}:
                 line = re.sub(
-                    r"X(-?\d+(?:\.\d+)?)",
+                    r"X([^\s]+)",
                     r"canned_cycle(X=\1)",
                     line
                 )
                 python_code += f"{line}\n"
                 continue
 
-            # Case 3: Only Y is present. Regex matches: Y[num]
+            # Case 3: Only Y is present. Regex matches: Y[num or expression]
             elif set(keys) == {"Y"}:
                 line = re.sub(
-                    r"Y(-?\d+(?:\.\d+)?)",
+                    r"Y([^\s]+)",
                     r"canned_cycle(Y=\1)",
                     line
                 )
