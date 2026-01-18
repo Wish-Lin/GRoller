@@ -126,8 +126,9 @@ def _create_text_editors(app: MainApp) -> None:
     _place_grid(app.xgc_editor_frame, (12,15), (10, 2, "nw"))
     app.xgc_editor_frame.columnconfigure(0, weight=0)  # Line number
     app.xgc_editor_frame.columnconfigure(1, weight=1)  # Textarea (horiz fill)
-    app.xgc_editor_frame.columnconfigure(2, weight=0)  # Scrollbar
+    app.xgc_editor_frame.columnconfigure(2, weight=0)  # Y Scrollbar
     app.xgc_editor_frame.rowconfigure(0, weight=1)     # All fill vertically
+    app.xgc_editor_frame.rowconfigure(1, weight=0)     # X scrollbar
 
     app.result_output_frame = tk.Frame(app.root)
     _place_grid(app.result_output_frame, (8,15), (23, 2, "nw"))
@@ -135,26 +136,43 @@ def _create_text_editors(app: MainApp) -> None:
     app.result_output_frame.columnconfigure(1, weight=1)
     app.result_output_frame.columnconfigure(2, weight=0)
     app.result_output_frame.rowconfigure(0, weight=1)
+    app.result_output_frame.rowconfigure(1, weight=0)
 
-    # Line Number | Textarea | Scrollbar. Arranged using grid() to change
-    # width dynamically
+    # Line Number | Textarea | Y Scrollbar. Arranged using grid() to change
+    # width dynamically. X Scrollbar at the bottom of textarea
 
-    # Create scrollbar inside respective frames
-    app.xgc_editor_scrollbar = tk.Scrollbar(app.xgc_editor_frame)
-    app.result_output_scrollbar = tk.Scrollbar(app.result_output_frame)
+    # Create scrollbar inside respective frames. X scrollbars logic is set in
+    # this module, whereas Y scrollbar need to coordinate with linenum widget
+    app.xgc_editor_xscrollbar = tk.Scrollbar(
+        app.xgc_editor_frame,
+        orient=tk.HORIZONTAL,
+    )
+    app.xgc_editor_yscrollbar = tk.Scrollbar(app.xgc_editor_frame)
+    app.result_output_xscrollbar = tk.Scrollbar(
+        app.result_output_frame,
+        orient=tk.HORIZONTAL,
+    )
+    app.result_output_yscrollbar = tk.Scrollbar(app.result_output_frame)
 
     # Create textarea inside respective frames. Their yscrollcommand
-    # connection wtih scrollbar is handled together on linenumber widget init
+    # connection wtih scrollbar is handled on linenumber widget init, in
+    # tklinenums.py
     app.xgc_editor = tk.Text(
-        app.xgc_editor_frame,
-        # yscrollcommand=app.xgc_editor_scrollbar.set,
+        app.xgc_editor_frame, wrap=tk.NONE,
+        # yscrollcommand=app.xgc_editor_yscrollbar.set,
+        xscrollcommand=app.xgc_editor_xscrollbar.set,
         width=1, height=1, undo=True, font=app._editor_font
     )
     app.result_output = tk.Text(
-        app.result_output_frame, state = tk.DISABLED,
-        # yscrollcommand=app.result_output_scrollbar.set,
+        app.result_output_frame, state = tk.DISABLED, wrap=tk.NONE,
+        # yscrollcommand=app.result_output_yscrollbar.set,
+        xscrollcommand=app.result_output_xscrollbar.set,
         width=1, height=1, font=app._editor_font 
     ) # One shouldn't edit the output
+
+    # Complete X scrollbar link to editor
+    app.xgc_editor_xscrollbar.configure(command=app.xgc_editor.xview)
+    app.result_output_xscrollbar.configure(command=app.result_output.xview)
 
     # Add hotkeys to xgc_editor: Ctrl+Enter = Compile and Tab = User-defined
     # space count
@@ -172,7 +190,7 @@ def _create_text_editors(app: MainApp) -> None:
     app.xgc_editor_linenums = TkLineNumbers(
         app.xgc_editor_frame,
         app.xgc_editor,
-        app.xgc_editor_scrollbar,
+        app.xgc_editor_yscrollbar,
         justify="right",
         colors=("#2197db", "#ffffff")
     )
@@ -187,7 +205,7 @@ def _create_text_editors(app: MainApp) -> None:
     app.result_output_linenums = TkLineNumbers(
         app.result_output_frame,
         app.result_output,
-        app.result_output_scrollbar,
+        app.result_output_yscrollbar,
         justify="right",
         colors=("#2197db", "#ffffff")
     )
@@ -198,11 +216,11 @@ def _create_text_editors(app: MainApp) -> None:
     )        
 
     # Finish the other direction of of text-scrollbar connection
-    app.xgc_editor_scrollbar.config(
+    app.xgc_editor_yscrollbar.config(
         command=lambda *args:
         (app.xgc_editor.yview(*args), app.xgc_editor_linenums.redraw())
     )
-    app.result_output_scrollbar.config(
+    app.result_output_yscrollbar.config(
         command=lambda *args:
         (app.result_output.yview(*args), app.result_output_linenums.redraw())
     )
@@ -210,10 +228,13 @@ def _create_text_editors(app: MainApp) -> None:
     # Arrange everything via grid()
     app.xgc_editor_linenums.grid(row=0, column=0, sticky="ns")
     app.xgc_editor.grid(row=0, column=1, sticky="nsew")
-    app.xgc_editor_scrollbar.grid(row=0, column=2, sticky="ns")
+    app.xgc_editor_xscrollbar.grid(row=1, column=1, sticky="ew")
+    app.xgc_editor_yscrollbar.grid(row=0, column=2, sticky="ns")
+
     app.result_output_linenums.grid(row=0, column=0, sticky="ns")
     app.result_output.grid(row=0, column=1, sticky="nsew")
-    app.result_output_scrollbar.grid(row=0, column=2, sticky="ns")
+    app.result_output_xscrollbar.grid(row=1, column=1, sticky="ew")
+    app.result_output_yscrollbar.grid(row=0, column=2, sticky="ns")
 
 def _create_console(app: MainApp) -> None:
     """
@@ -259,13 +280,14 @@ def _create_console(app: MainApp) -> None:
     # Measure the console width in characters, then make the adequate console
     # header that will be inserted after every _reset_console()
     app.root.update_idletasks() # Make sure the size of console is rendered
-    console_char_width = ( # Rounded down and play safe by minus 2
-        app.console.winfo_width() // app._console_font.measure("0") - 2
+    console_char_width = ( # Rounded down
+        app.console.winfo_width() // app._console_font.measure("0") 
     )
     ch_first_line = (
         f"GRoller {app.groller_ver} | Python {sys.version.split()[0]}"
     )
-    app.console_hline = "-" * console_char_width
+    # Play safe by minus 2 so it definitely doesn't overflow the line
+    app.console_hline = "-" * (console_char_width - 2)
     app.console_header = (
         f"{ch_first_line.center(console_char_width)}\n{app.console_hline}\n"
     )

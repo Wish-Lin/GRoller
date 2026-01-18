@@ -101,9 +101,9 @@ class TkLineNumbers(Canvas):
 
         # Set the yscrollcommand of the text widget to redraw the widget
         # Also deal with the accompanying scrollbar
-        textwidget["yscrollcommand"] = lambda first,last: (
+        textwidget["yscrollcommand"] = lambda first, last: (
             self.redraw,
-            scrollbar.set(first,last)
+            scrollbar.set(first, last)
         )
 
         # Redraw the widget
