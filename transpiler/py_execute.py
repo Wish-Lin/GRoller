@@ -24,8 +24,8 @@ machine_state = {
         "cy": 0.0              # Set by G16
     },
     "canned_cycle": {
-        "enabled": False,
-        "mode": "G81"
+        "mode": "",
+        "params": {}
     },
     "unit": "mm",              # Set by G20/G21, No real use for now.
     "positioning": "absolute", # Set by G90/G91. No real use for now.
@@ -105,10 +105,6 @@ def console_print(input: int | float | str) -> None:
         raise TypeError("console_print: Input is not a number or string")
     app._console_printline(input, "print", False)
 
-def canned_cycle(**kwargs: dict) -> None:
-    global exec_result
-    exec_result += f"hahaha{kwargs}\n"
-
 def G00(**kwargs: dict) -> None:
     """
     Rapid Linear motion
@@ -126,6 +122,11 @@ def G00(**kwargs: dict) -> None:
     -------
     None
         This function does not return anything.
+    
+    Raises
+    ------
+    ValueError
+        Unexpected parameters are present
 
     See Also
     --------
@@ -136,7 +137,7 @@ def G00(**kwargs: dict) -> None:
     # Check if unexpected G00 parameters are present, if so raise exception.
     illegal = set(kwargs) - {"X", "Y", "Z", "A", "B", "C"}
     if illegal:
-        raise ValueError(f"G00 contains unexpected parameters: {illegal}")
+        raise ValueError(f"G00 contains unexpected parameter(s): {illegal}")
 
     # Calculate the X(radius) and Y(angle) into actual X and Y
     if machine_state["polar_mode"]["enabled"]:
@@ -180,6 +181,11 @@ def G01(**kwargs: dict) -> None:
     None
         This function does not return anything.
 
+    Raises
+    ------
+    ValueError
+        Unexpected parameters are present
+
     See Also
     --------
     G00 : Rapid linear motion
@@ -189,7 +195,7 @@ def G01(**kwargs: dict) -> None:
     # Check if unexpected G01 parameters are present, if so raise exception.
     illegal = set(kwargs) - {"X", "Y", "Z", "A", "B", "C", "F"}
     if illegal:
-        raise ValueError(f"G01 contains unexpected parameters: {illegal}")
+        raise ValueError(f"G01 contains unexpected parameter(s): {illegal}")
 
     # Calculate the X(radius) and Y(angle) into actual X and Y
     if machine_state["polar_mode"]["enabled"]:
@@ -234,6 +240,11 @@ def G02(**kwargs: dict) -> None:
     -------
     None
         This function does not return anything.
+    
+    Raises
+    ------
+    ValueError
+        Unexpected parameters are present
 
     See Also
     --------
@@ -244,7 +255,7 @@ def G02(**kwargs: dict) -> None:
     # Check if unexpected G02 parameters are present, if so raise exception.
     illegal = set(kwargs) - {"X", "Y", "Z", "I", "J", "K", "R", "F"}
     if illegal:
-        raise ValueError(f"G02 contains unexpected parameters: {illegal}")
+        raise ValueError(f"G02 contains unexpected parameter(s): {illegal}")
 
     gcode_line = f"G02 {" ".join(f"{k}{v}" for k, v in kwargs.items())}\n"
     exec_result += gcode_line
@@ -269,6 +280,11 @@ def G03(**kwargs: dict) -> None:
     None
         This function does not return anything.
 
+    Raises
+    ------
+    ValueError
+        Unexpected parameters are present
+
     See Also
     --------
     G02 : Clockwise arc
@@ -278,7 +294,7 @@ def G03(**kwargs: dict) -> None:
     # Check if unexpected G03 parameters are present, if so raise exception.
     illegal = set(kwargs) - {"X", "Y", "Z", "I", "J", "K", "R", "F"}
     if illegal:
-        raise ValueError(f"G03 contains unexpected parameters: {illegal}")
+        raise ValueError(f"G03 contains unexpected parameter(s): {illegal}")
 
     gcode_line = f"G03 {" ".join(f"{k}{v}" for k, v in kwargs.items())}\n"
     exec_result += gcode_line
@@ -495,6 +511,75 @@ def G21(is_line_end: bool) -> None:
     else:
         exec_result += "G21 "
 
+def canned_cycle_xy(X: int | float, Y: int | float) -> None:
+    global machine_state, exec_result
+    params = machine_state["canned_cycle"]["parameters"]
+    match machine_state["canned_cycle"]["mode"]:
+        case "": # Not in canned cycle mode, raise error
+            raise SyntaxError(
+                "Canned cycle line (X,Y) appeared outside canned cycle"
+            )
+        case "G81.1": # G81.1: Simple drilling cycle, enhanced version
+            G00(X=X, Y=Y)  # Rapid move above hole
+            # Repeat if L is specified, otherwise just do it once
+            i = 0
+            while i < (params["L"] if "L" in params else 1):
+                G01(Z=params["Z"], F=params["F"]) # Go down at specified F
+                if "P" in params:                 # Dwell if specified P
+                    G04(P=params["P"])
+                G00(Z=params["R"])                # Rapid retract
+                i += 1
+
+def G80(is_line_end: bool) -> None:
+    """
+    Leave canned cycle mode. It does not print itself to output.
+
+    Parameters
+    ----------
+    is_line_end : bool
+        A parameter passed in from preprocessor. Not relevant for this function 
+        since it is not meant to be present in the final G-code.
+
+    Returns
+    -------
+    None
+        This function does not return anything.
+
+    See Also
+    --------
+    G81_1 : Basic drilling cycle
+    """
+    global machine_state
+
+    machine_state["canned_cycle"]["mode"] = "" # Serves as False
+    machine_state["canned_cycle"]["parameters"] = {} # Empty it out
+
+def G81_1(**kwargs: dict) -> None:
+    global machine_state
+
+    illegal = set(kwargs) - {"Z", "R", "F", "X", "Y", "L", "P", "D", "A"}
+    if illegal:
+        raise ValueError(f"G81.1 contains unexpected parameter(s): {illegal}")
+    missing_required = {"Z", "R", "F", "X", "Y"} - set(kwargs)
+    if missing_required:
+        raise ValueError(
+            f"G81.1 necessary parameter(s) missing: {missing_required}"
+        )
+    if ("D" in set(kwargs)) ^ ("A" in set(kwargs)): # XOR
+        raise ValueError(
+            "G81.1 parameters \"D\" and \"A\" must either provided together, "
+            "or not provided at all."
+        )
+    # Check complete, no issues detected, proceed
+    machine_state["canned_cycle"]["mode"] = "G81.1"
+
+    # Pass all of kwargs except X and Y to canned cycle parameter global.
+    X, Y = kwargs.pop("X"), kwargs.pop("Y")
+    machine_state["canned_cycle"]["parameters"] = kwargs
+    
+    # Call canned cycle on the first (X,Y) coordinate
+    canned_cycle_xy(X=X, Y=Y)
+
 def G90(is_line_end: bool) -> None:
     """
     Set to absolute positioning mode. No effect in this program
@@ -702,7 +787,6 @@ exec_ns = {
     "round": round,
     "frange": frange,
     "console_print": console_print,
-    "canned_cycle": canned_cycle,
 
     # The G-code functions, core of this Python hack
     "G00": G00,
@@ -717,6 +801,10 @@ exec_ns = {
     "G19": G19,
     "G20": G20,
     "G21": G21,
+    # Implementation of canned cycle, not directly called by user
+    "canned_cycle_xy": canned_cycle_xy, 
+    "G80": G80,
+    "G81_1": G81_1,
     "G90": G90,
     "G91": G91,
     "G93": G93,

@@ -326,7 +326,7 @@ class MainApp:
             # Get the traceback object and check if the exception occured
             # before or after the exec() stage.
             traceback_str = traceback.format_exc()
-            # print(traceback_str)
+            print(traceback_str)
             match = re.search( # This line only shows up in exec() layer
                 r"File \"<string>\", line (\d+)",
                 traceback_str

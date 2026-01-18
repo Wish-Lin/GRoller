@@ -13,7 +13,7 @@ import re, ast
 from .py_execute import python_to_gcode
 
 def xgc_to_gcode(xgc_content: str, transpiler_setting: dict) -> str:
-    python_code = xgc_to_python(xgc_strip(xgc_content))
+    python_code = xgc_to_python(xgc_preprocess(xgc_content))
     crude_gcode = python_to_gcode(python_code)
     final_gcode = round_gcode(
         crude_gcode,
@@ -22,9 +22,10 @@ def xgc_to_gcode(xgc_content: str, transpiler_setting: dict) -> str:
     )
     return final_gcode
 
-def xgc_strip(xgc_script: str) -> str:
+def xgc_preprocess(xgc_script: str) -> str:
     """
-    Strip the xgc script of comments, [] syntax sugar and empty lines.
+    Strip the xgc script of comments, [] syntax sugar and empty lines. Convert
+    dot to underscore in commands, for example G81.1 -> G81_1
 
     The only type of comments that are allowed in xgc, and the ones that this
     function strips, are semicolon ; ones, where both inline and standalone 
@@ -37,8 +38,12 @@ def xgc_strip(xgc_script: str) -> str:
     Returns:
         str: The stripped xgc script
     """
+    # Change all G/M[num].[num] to G/M[num]_[num] so they don't cause issue 
+    # in Python
+    result: str = re.sub(r"([GM]\d+)\.(\d+)", r"\1_\2", xgc_script)
+
     # Strip all ; to line end
-    result: str = re.sub(r"[ \t]*;.*", "", xgc_script) 
+    result = re.sub(r"[ \t]*;.*", "", result) 
 
     # Remove empty/whitespace only lines that the user made or created during
     # previous stripping. tk.Text always uses \n.
@@ -53,7 +58,7 @@ def xgc_strip(xgc_script: str) -> str:
     
 def xgc_to_python(xgc_script: str) -> str:
     """
-    Convert a single line of xgc to its corresponding function
+    Convert a single line of xgc to its corresponding function(s)
 
     Converts a G/M command with parameters (ex: G01 X10 Y5 Z1) to a function
     of the same name: G01(X=10, Y=5, Z=1), which will be used in exec() to
@@ -83,7 +88,7 @@ def xgc_to_python(xgc_script: str) -> str:
     line_no = 0 # Keep track of line number for error report
     # Set of supported G-code commands that take no input
     paramaterless_commands: set = {
-        "G15", "G17", "G18", "G19", "G20", "G21", "G90", 
+        "G15", "G17", "G18", "G19", "G20", "G21", "G80", "G90", 
         "G91", "G93", "G94","M05", "M30"
     }
     try:
@@ -104,35 +109,12 @@ def xgc_to_python(xgc_script: str) -> str:
                 python_code += f"{line}\n"
                 continue
 
-            # If the line consists of only X and/or Y, then it is a line in a 
-            # canned cycle and is dealt with here. 
-            
-            # Case 1: Both X and Y are present. Regex matches:
-            # X[num or expression][some space]Y[num or expression]
-            elif set(keys) == {"X", "Y"}:
+            # If the line consists of only X and Y, then it is a line in a 
+            # canned cycle and is dealt with here. Both X and Y must be present
+            if set(keys) == {"X", "Y"}:
                 line = re.sub(
                     r"X([^\s]+)\s+Y([^\s]+)",
-                    r"canned_cycle(X=\1, Y=\2)",
-                    line
-                )
-                python_code += f"{line}\n"
-                continue
-
-            # Case 2: Only X is present. Regex matches: X[num or expression]
-            elif set(keys) == {"X"}:
-                line = re.sub(
-                    r"X([^\s]+)",
-                    r"canned_cycle(X=\1)",
-                    line
-                )
-                python_code += f"{line}\n"
-                continue
-
-            # Case 3: Only Y is present. Regex matches: Y[num or expression]
-            elif set(keys) == {"Y"}:
-                line = re.sub(
-                    r"Y([^\s]+)",
-                    r"canned_cycle(Y=\1)",
+                    r"canned_cycle_xy(X=\1, Y=\2)",
                     line
                 )
                 python_code += f"{line}\n"
@@ -144,7 +126,7 @@ def xgc_to_python(xgc_script: str) -> str:
             # line or mode change), then it is dealt here. The effects of True
             # and False are shown in py_execute.py.
 
-            elif set(tokens) <= paramaterless_commands: # subset detection
+            if set(tokens) <= paramaterless_commands: # subset detection
                 # Actually legit, proceed
                 python_code += f"{"(False)\n".join(tokens)}(True)\n"
                 continue
