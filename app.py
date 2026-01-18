@@ -11,6 +11,7 @@ import sys, re, traceback, json
 import tkinter as tk
 from tkinter import filedialog, messagebox, font
 from pathlib import Path
+from datetime import datetime
 
 
 from ui.menubar import create_menubar
@@ -201,7 +202,8 @@ class MainApp:
         # G-code file is stored in the same location as the xgc file, and
         # with the same name. Create if nonexistent and overwrite otherwise
         xgc_path = Path(self.settings["file_io"]["current_file"])
-        gcode_path = xgc_path.with_name(f"{xgc_path.stem}.gcode")
+        gc_ext = self.settings["file_io"]["gcode_file_extension"]
+        gcode_path = xgc_path.with_name(f"{xgc_path.stem}.{gc_ext}")
         
         # Get both scripts from editor
         xgc_script = self.xgc_editor.get("1.0", "end-1c")
@@ -304,10 +306,21 @@ class MainApp:
         self.result_output.delete("1.0", tk.END)
         xgc_script = self.xgc_editor.get("1.0", "end-1c")
 
-        try:
-            gcode_script = xgc_to_gcode(
-                xgc_script, self.settings["transpiler"]
+        # Create gcode header if enabled. Time is formatted as YYYY-MM-DD
+        # HH:MM:SS
+        if self.settings["transpiler"]["add_header"]:
+            gcode = (
+                f"; Compiled by GRoller v{self.groller_ver} on "
+                f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n"
+                "; Source File: "
+                f"{self.settings["file_io"]["current_file"]}\n\n"
             )
+        else:
+            gcode = ""
+
+        try:
+            # Compile the xgc script into gcode
+            gcode += xgc_to_gcode(xgc_script, self.settings["transpiler"])
         except Exception as e: 
             # Compilation failed for some reason
             # Get the traceback object and check if the exception occured
@@ -333,12 +346,12 @@ class MainApp:
         else:
             # Compilation Successful
             self._console_printline("Compilation Success!", "success", True)
-            self.result_output.insert(tk.END, gcode_script)
+            self.result_output.insert(tk.END, gcode)
         finally:
             # Disable result_output again and trigger linenumber redraw
             self.result_output.config(state=tk.DISABLED)
             self.result_output_linenums.redraw()
-        return "break"
+        return "break" # Prevent default behavior of Ctrl+Enter, which is Enter
 
     def _read_settings(self):
         """

@@ -17,10 +17,14 @@
   },
   "file_io": {
     "_comment": "File IO parameters, not open for user access",
-    "current_file": "/home/wish-lin/Documents/VolksCurta/GRoller/test/second.xgc"
+    "current_file": "/home/wish-lin/Documents/VolksCurta/GRoller/test/second.xgc",
+    "gcode_file_extension": "gcode"
   },
   "transpiler": {
     "_comment": "User-defined parameters for the transpiler",
+    "add_header": true,
+    "variable_comment": true,
+    "canned_cycle_comment": true,
     "positional_precision": 3,
     "angular_precision": 2
   }
