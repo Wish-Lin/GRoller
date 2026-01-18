@@ -12,10 +12,14 @@ Author: Wei-Hsu Lin
 import re, ast
 from .py_execute import python_to_gcode
 
-def xgc_to_gcode(xgc_content: str, val_precision: tuple) -> str:
+def xgc_to_gcode(xgc_content: str, transpiler_setting: dict) -> str:
     python_code = xgc_to_python(xgc_strip(xgc_content))
     crude_gcode = python_to_gcode(python_code)
-    final_gcode = round_gcode(crude_gcode, val_precision)
+    final_gcode = round_gcode(
+        crude_gcode,
+        transpiler_setting["positional_precision"],
+        transpiler_setting["angular_precision"]
+    )
     return final_gcode
 
 def xgc_strip(xgc_script: str) -> str:
@@ -219,9 +223,8 @@ def _xgc_line_to_func(xgc_line: str) -> str:
     param_str = ", ".join(f"{k}={v}" for k, v in param_list)
     return f"{leading_space}{command}({param_str})"
 
-def round_gcode(crude_gcode: str, max_precision: tuple):
+def round_gcode(crude_gcode: str, position_prec: int, angular_prec: int):
 
-    position_prec, angular_prec = max_precision
     position_pattern = r"([XYZ])(-?\d+(?:\.\d+)?)"
     angular_pattern = r"([ABC])(-?\d+(?:\.\d+)?)"
     def round_val(match, prec):
