@@ -283,48 +283,32 @@ def G03(**kwargs: dict) -> None:
     gcode_line = f"G03 {" ".join(f"{k}{v}" for k, v in kwargs.items())}\n"
     exec_result += gcode_line
 
-def G04(**kwargs: dict) -> None:
+def G04(P: int | float) -> None:
     """
-    Dwell for P/X/U seconds or milliseconds.
+    Dwell for P time. Positive time = seconds and negative time = milliseconds.
 
-    Dwell = Spindle state is unchanged. P, X and U covers all CNC machines on
-    the market that I could find, and it also preserves decimal points, which
-    is necessary for HAAS machines. For desktop CNCs (main usage of this app),
-    it is typically P<seconds>. Example: G04 P2 (dwell for 2 seconds)
+    The behavior of G04 varies across different controllers. In XGC, one 
+    always specifiy the time in P and use positive/negative to specify unit.
+    This function then checks the user specified G04 flavor in settings and
+    output the correct format for the machine. Default flavor is RS-274, i.e.,
+    P<seconds>.
 
     Parameters
     ----------
-    kwargs : dict
-        The parameters passed in. There should be one and only one parameter 
-        named P, X or U.
+    P : int or float
+        Dwell time. Positive time = seconds and negative time = milliseconds.
 
     Returns
     -------
     None
         This function does not return anything.
-
-    Raises
-    ------
-    TypeError
-        Too many parameters
-    TypeError
-        Too few parameters
-    ValueError
-        Parameter not named P, X or U.
     """
     global exec_result
 
-    if len(kwargs) < 1:
-        raise TypeError(f"G04 contains too few parameters")
-    elif len(kwargs) > 1:
-        raise TypeError(f"G04 contains too many parameters")
-
-    key, value = next(iter(kwargs.items()))
-    if key not in {"P", "X", "U"}:
-        raise ValueError(f"G04 contains an unexpected parameter: {key}")
-
-    exec_result += f"G04 {key}{value}\n"
-
+    match app.settings["transpiler"]["g04-style"]:
+        case "RS-274": # Output is in P<seconds>
+            exec_result += f"G04 P{P}\n" if P >= 0 else f"G04 P{-P/1000}\n"
+                
 def G15(is_line_end: bool) -> None:
     """
     Leave polar coordinate mode. It does not print itself to output.

@@ -25,6 +25,7 @@
     "add_header": true,
     "variable_comment": true,
     "canned_cycle_comment": true,
+    "g04-style": "RS-274",
     "positional_precision": 3,
     "angular_precision": 2
   }
