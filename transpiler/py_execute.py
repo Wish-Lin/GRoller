@@ -573,6 +573,13 @@ def G81_1(**kwargs: dict) -> None:
     # Check complete, no issues detected, proceed
     machine_state["canned_cycle"]["mode"] = "G81.1"
 
+    # If D and A are specified, use this to modify Z to get true depth
+    if "D" in set(kwargs): 
+        # A is also there, otherwise error was raised earlier
+        D, A = kwargs.pop("D"), kwargs.pop("A") # Remove
+        hd_ratio = 0.5/(math.tan(math.radians(A/2)))
+        kwargs["Z"] -= D * hd_ratio
+
     # Pass all of kwargs except X and Y to canned cycle parameter global.
     X, Y = kwargs.pop("X"), kwargs.pop("Y")
     machine_state["canned_cycle"]["parameters"] = kwargs
