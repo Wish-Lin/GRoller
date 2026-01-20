@@ -12,9 +12,11 @@ import tkinter as tk
 from tkinter import font
 from tkinter.scrolledtext import ScrolledText
 from lib.tklinenums import TkLineNumbers
+from PIL import Image, ImageTk
 
 def create_layout(app: tk.Tk) -> None:
     # _configure_root_grid(app, True)
+    _create_logo(app)
     _create_text_editors(app)
     _create_console(app)
 
@@ -75,21 +77,40 @@ def _configure_root_grid(app: tk.Tk, show: bool) -> None:
     """
     rows, cols = 18, 32 # Enough for this app
     for r in range(rows):
-        app.grid_rowconfigure(r, weight=1, uniform="root_grid")
+        app.root.grid_rowconfigure(r, weight=1, uniform="root_grid")
     for c in range(cols):
-        app.grid_columnconfigure(c, weight=1, uniform="root_grid")
+        app.root.grid_columnconfigure(c, weight=1, uniform="root_grid")
     # Display the grid visually (only on during development)
     if show:
         colors = ["lightblue", "lightgreen"]
         for r in range(rows):
             for c in range(cols):
                 frame = tk.Frame(
-                    app,
+                    app.root,
                     bg=colors[(r + c) % 2],  # checkerboard pattern
                     highlightbackground="black",
                     highlightthickness=0, # visible grid lines
                 )
                 frame.grid(row=r, column=c, sticky="nsew")
+    
+def _create_logo(app: MainApp) -> None:
+    # Create label carrying the logo and call _place_grid()
+    app.logo_label = tk.Label(app.root)
+    _place_grid(app.logo_label, (8, 2), (1, 1, "nw"))
+
+    # Make a copy of logo image and scale it to fit the label
+    scaled_logo_pil: PIL.Image.Image = app.logo_image.copy()
+    # Make sure the label size is rendered
+    app.root.update_idletasks() 
+    # Scale to fit the window, modified in place. LANCZOS is good but slower
+    scaled_logo_pil.thumbnail(
+        (app.logo_label.winfo_width(), app.logo_label.winfo_height()),
+        Image.Resampling.LANCZOS
+    )
+    print((app.logo_label.winfo_width(), app.logo_label.winfo_height()))
+    scaled_logo: tk.PhotoImage = ImageTk.PhotoImage(scaled_logo_pil)
+    app.logo_label.configure(image=scaled_logo)
+    app.logo_label.image = scaled_logo  # Garbage collection prevention
     
             
 def _create_text_editors(app: MainApp) -> None:

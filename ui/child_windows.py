@@ -12,6 +12,8 @@ Author: Wei-Hsu Lin
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 from tkinter import ttk, font
+from pathlib import Path
+from PIL import Image, ImageTk
 
 def create_help_about(app):
     
@@ -22,13 +24,27 @@ def create_help_about(app):
     win_height = app.settings["ui"]["window_height"]
     popup.geometry(f"{win_width/2:.0f}x{2*win_height/3:.0f}")
     popup.resizable(False, False)
+    popup.update_idletasks()  # Make sure the popup size is rendered
+
+    # Add logo to top.
+    # First make a copy of the app logo
+    scaled_logo_pil: PIL.Image.Image = app.logo_image.copy()
+    # Scale to fit the window, modified in place. LANCZOS is good but slower
+    scaled_logo_pil.thumbnail(
+        (0.7*popup.winfo_width(), popup.winfo_height()),
+        Image.Resampling.LANCZOS
+    )
+    scaled_logo: tk.PhotoImage = ImageTk.PhotoImage(scaled_logo_pil)
+    logo_label = tk.Label(popup, image=scaled_logo)
+    logo_label.image = scaled_logo  # Garbage collection prevention
+    logo_label.pack(side=tk.TOP, fill=tk.X, pady=20)
 
     paragraph1 = tk.Label(
         popup,
         text= (
             "GRoller is a G-code to G-code transpiler"
         ),
-        bg="red", font=app._label_font)
+        font=app._label_font)
     paragraph1.pack(side=tk.TOP, fill=tk.X)
 
 def create_help_license(app):

@@ -12,6 +12,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, font
 from pathlib import Path
 from datetime import datetime
+from PIL import Image, ImageTk
 
 
 from ui.menubar import create_menubar
@@ -35,10 +36,15 @@ class MainApp:
         None
         """
         # Set internal variables, including the most important one: root
-        self.root = root
-        self.groller_ver = "0.1.0"
-        self.program_title = f"GRoller {self.groller_ver}"
-        self.settings_json_path = Path(__file__).with_name("settings.json")
+        self.root: tk.Tk = root
+        self.groller_ver: str = "0.2.0"
+        self.program_title: str = f"GRoller {self.groller_ver}"
+        self.settings_json_path: pathlib.Path = Path(
+            __file__
+        ).with_name("settings.json")
+        self.logo_image: PIL.Image.Image = Image.open(
+            Path(__file__).parent/"assets"/"brand"/"logo_2600x600.png"
+        )
 
         # Read settings from file
         # Only if the reading is success will the app start
@@ -310,7 +316,7 @@ class MainApp:
         # HH:MM:SS
         if self.settings["transpiler"]["add_header"]:
             gcode = (
-                f"; Compiled by GRoller v{self.groller_ver} on "
+                f"; Compiled by GRoller {self.groller_ver} on "
                 f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n"
                 "; Source File: "
                 f"{self.settings["file_io"]["current_file"]}\n\n"

@@ -521,6 +521,7 @@ def canned_cycle_xy(X: int | float, Y: int | float) -> None:
             )
         case "G81.1": # G81.1: Simple drilling cycle, enhanced version
             G00(X=X, Y=Y)  # Rapid move above hole
+            
             # Repeat if L is specified, otherwise just do it once
             i = 0
             while i < (params["L"] if "L" in params else 1):
